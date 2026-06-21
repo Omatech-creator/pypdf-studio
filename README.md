@@ -48,17 +48,22 @@ python main.py
 On Windows you can also double-click **`run.bat`**, which pins a known-good
 interpreter.
 
-## Build a portable .exe (Windows)
+## Build a portable app (Windows)
 
-Produce a single self-contained executable that needs no Python install:
+Produce a self-contained app folder that needs no Python install:
 
 ```bat
 build_portable.bat
 ```
 
-The result is `dist/PyPDFStudio.exe`. It stores its settings and logs in a
-`PyPDFStudio-Data` folder **next to the executable**, so the whole app is
-portable (e.g. on a USB stick) and leaves no traces on the host.
+This builds a slimmed **onedir** bundle (~245 MB) at `dist/PyPDFStudio/`.
+Run `dist/PyPDFStudio/PyPDFStudio.exe` — it starts instantly. The script
+bundles everything (so Qt plugins are found) and then prunes the large Qt
+modules the app never uses (WebEngine, Quick/QML, 3D, Charts, Multimedia, …).
+
+The app stores its settings and logs in a `PyPDFStudio-Data` folder **next to
+the executable**, so the whole `PyPDFStudio` folder is portable (copy it to a
+USB stick and run anywhere) and leaves no traces on the host.
 
 ## Project layout
 
