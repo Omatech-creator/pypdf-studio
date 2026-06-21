@@ -1,0 +1,21 @@
+# Build / packaging output
+build/
+dist/
+*.spec
+
+# Portable runtime data (settings DB, logs, autosave) created next to the app
+PyPDFStudio-Data/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
