@@ -7,7 +7,7 @@ clean, well-commented `main.py`.
 
 [![Download](https://img.shields.io/badge/download-Windows%20app%20(v1.0.0)-3b82f6?style=for-the-badge&logo=windows)](https://github.com/Omatech-creator/pypdf-studio/releases/latest)
 
-![Theme](https://img.shields.io/badge/theme-dark%20%7C%20light-3b82f6) ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![Qt](https://img.shields.io/badge/UI-PySide6-41cd52) [![Release](https://img.shields.io/github/v/release/Omatech-creator/pypdf-studio)](https://github.com/Omatech-creator/pypdf-studio/releases/latest)
+![Theme](https://img.shields.io/badge/theme-dark%20%7C%20light-3b82f6) ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![Qt](https://img.shields.io/badge/UI-PySide6-41cd52) [![Release](https://img.shields.io/github/v/release/Omatech-creator/pypdf-studio)](https://github.com/Omatech-creator/pypdf-studio/releases/latest) [![Build](https://github.com/Omatech-creator/pypdf-studio/actions/workflows/build-release.yml/badge.svg)](https://github.com/Omatech-creator/pypdf-studio/actions/workflows/build-release.yml)
 
 > **⬇️ Just want to run it?** Grab the portable Windows app from the
 > [**latest release**](https://github.com/Omatech-creator/pypdf-studio/releases/latest) —
@@ -70,6 +70,27 @@ modules the app never uses (WebEngine, Quick/QML, 3D, Charts, Multimedia, …).
 The app stores its settings and logs in a `PyPDFStudio-Data` folder **next to
 the executable**, so the whole `PyPDFStudio` folder is portable (copy it to a
 USB stick and run anywhere) and leaves no traces on the host.
+
+### macOS / Linux
+
+```bash
+./build_portable.sh
+```
+
+Produces `dist/PyPDFStudio.app` on macOS or `dist/PyPDFStudio/` on Linux,
+with the same prune step applied.
+
+### Automated builds (CI)
+
+Pushing a version tag (e.g. `v1.0.1`) triggers a
+[GitHub Actions workflow](.github/workflows/build-release.yml) that builds the
+portable app for **Windows, macOS and Linux** and attaches all three to the
+matching GitHub Release automatically:
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
 
 ## Project layout
 

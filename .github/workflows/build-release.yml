@@ -1,0 +1,155 @@
+name: Build portable apps
+
+# Builds the portable PyPDF Studio app for Windows, macOS and Linux.
+# - On a pushed version tag (e.g. v1.0.1) the built bundles are attached to the
+#   matching GitHub Release.
+# - Can also be run manually (workflow_dispatch); bundles are uploaded as
+#   workflow artifacts in that case.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: PyPDFStudio-windows-x64
+          - os: macos-latest
+            artifact: PyPDFStudio-macos
+          - os: ubuntu-latest
+            artifact: PyPDFStudio-linux-x64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Qt runtime libraries (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libegl1 libgl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0 \
+            libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+            libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install PySide6 PyMuPDF pypdf Pillow reportlab pytesseract \
+            python-docx openpyxl python-pptx
+
+      - name: Build with PyInstaller
+        run: >
+          pyinstaller --noconfirm --clean --onedir --windowed
+          --name PyPDFStudio
+          --collect-all PySide6 --collect-all fitz --collect-all pymupdf
+          --hidden-import pypdf --hidden-import PIL --hidden-import reportlab
+          --hidden-import pytesseract --hidden-import docx --hidden-import pptx
+          --hidden-import openpyxl --exclude-module cv2 --exclude-module tkinter
+          main.py
+
+      # ---- Prune unused Qt modules (best-effort; never fails the build) ------
+      - name: Prune unused Qt (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ps = "dist/PyPDFStudio/_internal/PySide6"
+          $mods = @(
+            "Qt6WebEngine","QtWebEngine","Qt6WebChannel","QtWebChannel","Qt6WebSockets","QtWebSockets","Qt6WebView","QtWebView",
+            "Qt6Quick","QtQuick","Qt6Qml","QtQml","Qt63D","Qt3D",
+            "Qt6Charts","QtCharts","Qt6DataVisualization","QtDataVisualization","Qt6Graphs","QtGraphs",
+            "Qt6Multimedia","QtMultimedia","Qt6SpatialAudio","QtSpatialAudio",
+            "Qt6Designer","QtDesigner","Qt6Help","QtHelp","Qt6Sql","QtSql","Qt6Test","QtTest",
+            "Qt6Bluetooth","QtBluetooth","Qt6Nfc","QtNfc","Qt6Serial","QtSerial",
+            "Qt6Positioning","QtPositioning","Qt6Sensors","QtSensors","Qt6Location","QtLocation",
+            "Qt6RemoteObjects","QtRemoteObjects","Qt6Scxml","QtScxml","Qt6StateMachine","QtStateMachine",
+            "Qt6TextToSpeech","QtTextToSpeech","Qt6Pdf","QtPdf",
+            "avcodec","avformat","avutil","swscale","swresample"
+          )
+          foreach ($m in $mods) {
+            Get-ChildItem $ps -Recurse -File -Filter "$m*" -ErrorAction SilentlyContinue |
+              ForEach-Object { [System.IO.File]::Delete($_.FullName) }
+          }
+          foreach ($d in @("resources","qml","translations")) {
+            $p = Join-Path $ps $d
+            if (Test-Path $p) { [System.IO.Directory]::Delete($p, $true) }
+          }
+
+      - name: Prune unused Qt (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          base="dist/PyPDFStudio/_internal/PySide6"
+          for m in WebEngine WebEngineCore WebEngineWidgets WebChannel WebSockets WebView \
+                   Quick Qml 3D Charts DataVisualization Graphs Multimedia SpatialAudio \
+                   Designer Help Sql Test Bluetooth Nfc Serial Positioning Sensors Location \
+                   RemoteObjects Scxml StateMachine TextToSpeech Pdf; do
+            find "$base" -iname "*Qt6${m}*" -delete 2>/dev/null || true
+            find "$base" -iname "*Qt${m}*.abi3.so" -delete 2>/dev/null || true
+          done
+          find "$base" -iname "QtWebEngineProcess*" -delete 2>/dev/null || true
+          rm -rf "$base"/Qt/qml "$base"/Qt/translations "$base"/Qt/resources 2>/dev/null || true
+
+      - name: Prune unused Qt (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          root="dist"
+          for m in WebEngineCore WebEngineWidgets WebEngineQuick WebChannel WebSockets WebView \
+                   Quick Qml Qt3DCore Qt3DRender Charts DataVisualization Graphs Multimedia \
+                   SpatialAudio Designer Help Sql Test Bluetooth Nfc Pdf; do
+            find "$root" -iname "*${m}*.framework" -prune -exec rm -rf {} + 2>/dev/null || true
+            find "$root" -iname "*Qt${m}*.so" -delete 2>/dev/null || true
+          done
+
+      # ---- Package -----------------------------------------------------------
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist/PyPDFStudio -DestinationPath ${{ matrix.artifact }}.zip -CompressionLevel Optimal
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cd dist
+          if [ -d PyPDFStudio.app ]; then
+            zip -ry "../${{ matrix.artifact }}.zip" PyPDFStudio.app
+          else
+            zip -ry "../${{ matrix.artifact }}.zip" PyPDFStudio
+          fi
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: tar -czf ${{ matrix.artifact }}.tar.gz -C dist PyPDFStudio
+
+      # ---- Publish -----------------------------------------------------------
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            ${{ matrix.artifact }}.zip
+            ${{ matrix.artifact }}.tar.gz
+          if-no-files-found: ignore
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ matrix.artifact }}.zip
+            ${{ matrix.artifact }}.tar.gz
+          fail_on_unmatched_files: false
