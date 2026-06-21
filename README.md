@@ -5,13 +5,14 @@ Python PDF stack (PyMuPDF, pypdf, Pillow, ReportLab, pytesseract). Inspired by
 Adobe Acrobat / Foxit / Nitro, with a sleek dark/light theme — all in a single,
 clean, well-commented `main.py`.
 
-[![Download](https://img.shields.io/badge/download-Windows%20app%20(v1.0.0)-3b82f6?style=for-the-badge&logo=windows)](https://github.com/Omatech-creator/pypdf-studio/releases/latest)
+[![Download](https://img.shields.io/badge/download-app%20(Win%20%7C%20macOS%20%7C%20Linux)-3b82f6?style=for-the-badge)](https://github.com/Omatech-creator/pypdf-studio/releases/latest)
 
 ![Theme](https://img.shields.io/badge/theme-dark%20%7C%20light-3b82f6) ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![Qt](https://img.shields.io/badge/UI-PySide6-41cd52) [![Release](https://img.shields.io/github/v/release/Omatech-creator/pypdf-studio)](https://github.com/Omatech-creator/pypdf-studio/releases/latest) [![Build](https://github.com/Omatech-creator/pypdf-studio/actions/workflows/build-release.yml/badge.svg)](https://github.com/Omatech-creator/pypdf-studio/actions/workflows/build-release.yml)
 
-> **⬇️ Just want to run it?** Grab the portable Windows app from the
+> **⬇️ Just want to run it?** Grab the portable app for **Windows, macOS, or
+> Linux** from the
 > [**latest release**](https://github.com/Omatech-creator/pypdf-studio/releases/latest) —
-> download the zip, extract, and run `PyPDFStudio\PyPDFStudio.exe`. No install needed.
+> download, extract, and run. No Python or install needed.
 
 ---
 
